@@ -8,7 +8,7 @@ import {
 } from 'react'
 import './App.css'
 
-type TabKey = 'rebuttal' | 'checklist' | 'form'
+type TabKey = 'rebuttal' | 'checklist'
 
 type RebuttalItem = {
   id: string
@@ -20,11 +20,6 @@ type ChecklistItem = {
   id: string
   label: string
   checked: boolean
-}
-
-type ActivityEntry = {
-  at: string
-  action: string
 }
 
 const initialRebuttalQuestions: RebuttalItem[] = [
@@ -168,23 +163,10 @@ const initialChecklistItems: ChecklistItem[] = [
   { id: 'c10', label: 'Shared next steps and asked for decision', checked: false },
 ]
 
-const fmt = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium',
-  timeStyle: 'medium',
-})
 const rebuttalStorageKey = 'call-assistant-rebuttals-v1'
-const googleFormPrefillStorageKey = 'call-assistant-google-form-prefill-link-v1'
 const accessSessionStorageKey = 'call-assistant-access-session-v1'
-const accessUsername = 'kosom morsi '
+const accessUsername = 'admin'
 const accessPassword = '123456'
-const googleFormViewUrl =
-  'https://docs.google.com/forms/d/e/1FAIpQLSc6MXV8du0sFzpovJUIROscCB55v0dGhmGwveGFiZ8afEeEQA/viewform'
-
-type GoogleFormConfig = {
-  iframeUrl: string
-  responseUrl: string
-  entryKeys: string[]
-}
 
 function getInitialRebuttals(): RebuttalItem[] {
   if (typeof window === 'undefined') return initialRebuttalQuestions
@@ -215,34 +197,9 @@ function toDuration(ms: number): string {
     .padStart(2, '0')}`
 }
 
-function getInitialPrefillLink(): string {
-  if (typeof window === 'undefined') return googleFormViewUrl
-  return window.localStorage.getItem(googleFormPrefillStorageKey) ?? googleFormViewUrl
-}
-
 function hasSavedAccessSession(): boolean {
   if (typeof window === 'undefined') return false
   return window.localStorage.getItem(accessSessionStorageKey) === 'granted'
-}
-
-function parseGoogleFormConfig(rawLink: string): GoogleFormConfig {
-  try {
-    const viewUrl = new URL(rawLink || googleFormViewUrl)
-    const responsePath = viewUrl.pathname.replace('/viewform', '/formResponse')
-    const responseUrl = `${viewUrl.origin}${responsePath}`
-    const iframeUrl = new URL(viewUrl.toString())
-    iframeUrl.searchParams.set('embedded', 'true')
-    const entryKeys = [...new Set([...viewUrl.searchParams.keys()].filter((key) => key.startsWith('entry.')))]
-    return { iframeUrl: iframeUrl.toString(), responseUrl, entryKeys }
-  } catch {
-    const fallback = new URL(googleFormViewUrl)
-    fallback.searchParams.set('embedded', 'true')
-    return {
-      iframeUrl: fallback.toString(),
-      responseUrl: googleFormViewUrl.replace('/viewform', '/formResponse'),
-      entryKeys: [],
-    }
-  }
 }
 
 function App() {
@@ -254,7 +211,6 @@ function App() {
   const [rebuttalQuestions, setRebuttalQuestions] = useState<RebuttalItem[]>(getInitialRebuttals)
   const [selectedRebuttalId, setSelectedRebuttalId] = useState('')
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(initialChecklistItems)
-  const [activityLog, setActivityLog] = useState<ActivityEntry[]>([])
 
   const [punchedInAt, setPunchedInAt] = useState<number | null>(null)
   const [punchedOutAt, setPunchedOutAt] = useState<number | null>(null)
@@ -263,15 +219,15 @@ function App() {
   const [now, setNow] = useState(Date.now())
   const [isTrackerMinimized, setIsTrackerMinimized] = useState(false)
   const [bubblePosition, setBubblePosition] = useState({ x: 24, y: 120 })
+  const [trackerPosition, setTrackerPosition] = useState({ x: 24, y: 24 })
   const [isDraggingBubble, setIsDraggingBubble] = useState(false)
+  const [isDraggingTracker, setIsDraggingTracker] = useState(false)
   const [dragPointerId, setDragPointerId] = useState<number | null>(null)
-  const [googleFormPrefillLink, setGoogleFormPrefillLink] = useState(getInitialPrefillLink)
-  const [formAutoStatus, setFormAutoStatus] = useState('Auto-fill pending...')
-  const [hasAutoFilledForm, setHasAutoFilledForm] = useState(false)
   const bubbleDragOffset = useRef({ x: 0, y: 0 })
+  const trackerDragOffset = useRef({ x: 0, y: 0 })
   const bubbleMoved = useRef(false)
   const bubbleSize = 68
-  const googleFormConfig = useMemo(() => parseGoogleFormConfig(googleFormPrefillLink), [googleFormPrefillLink])
+  const trackerWidth = 440
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
@@ -283,15 +239,15 @@ function App() {
       x: Math.max(16, window.innerWidth - 90),
       y: Math.max(16, window.innerHeight - 120),
     })
+    setTrackerPosition({
+      x: Math.max(16, window.innerWidth - trackerWidth - 24),
+      y: Math.max(16, window.innerHeight - 170),
+    })
   }, [])
 
   useEffect(() => {
     window.localStorage.setItem(rebuttalStorageKey, JSON.stringify(rebuttalQuestions))
   }, [rebuttalQuestions])
-
-  useEffect(() => {
-    window.localStorage.setItem(googleFormPrefillStorageKey, googleFormPrefillLink)
-  }, [googleFormPrefillLink])
 
   useEffect(() => {
     if (rebuttalQuestions.length === 0) return
@@ -300,24 +256,38 @@ function App() {
   }, [rebuttalQuestions, selectedRebuttalId])
 
   useEffect(() => {
-    if (!isDraggingBubble || dragPointerId === null) return
+    if ((!isDraggingBubble && !isDraggingTracker) || dragPointerId === null) return
 
     function onPointerMove(event: PointerEvent) {
       if (event.pointerId !== dragPointerId) return
-      bubbleMoved.current = true
-      const maxX = Math.max(0, window.innerWidth - bubbleSize)
-      const maxY = Math.max(0, window.innerHeight - bubbleSize)
-      const nextX = event.clientX - bubbleDragOffset.current.x
-      const nextY = event.clientY - bubbleDragOffset.current.y
-      setBubblePosition({
-        x: Math.min(Math.max(0, nextX), maxX),
-        y: Math.min(Math.max(0, nextY), maxY),
-      })
+      if (isDraggingBubble) {
+        bubbleMoved.current = true
+        const maxX = Math.max(0, window.innerWidth - bubbleSize)
+        const maxY = Math.max(0, window.innerHeight - bubbleSize)
+        const nextX = event.clientX - bubbleDragOffset.current.x
+        const nextY = event.clientY - bubbleDragOffset.current.y
+        setBubblePosition({
+          x: Math.min(Math.max(0, nextX), maxX),
+          y: Math.min(Math.max(0, nextY), maxY),
+        })
+      }
+
+      if (isDraggingTracker) {
+        const maxX = Math.max(0, window.innerWidth - trackerWidth)
+        const maxY = Math.max(0, window.innerHeight - 140)
+        const nextX = event.clientX - trackerDragOffset.current.x
+        const nextY = event.clientY - trackerDragOffset.current.y
+        setTrackerPosition({
+          x: Math.min(Math.max(0, nextX), maxX),
+          y: Math.min(Math.max(0, nextY), maxY),
+        })
+      }
     }
 
     function onPointerUp(event: PointerEvent) {
       if (event.pointerId !== dragPointerId) return
       setIsDraggingBubble(false)
+      setIsDraggingTracker(false)
       setDragPointerId(null)
     }
 
@@ -327,46 +297,13 @@ function App() {
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerup', onPointerUp)
     }
-  }, [bubbleSize, dragPointerId, isDraggingBubble])
-
-  useEffect(() => {
-    if (activeTab !== 'form' || hasAutoFilledForm) return
-    if (googleFormConfig.entryKeys.length < 2) {
-      setFormAutoStatus('Add a Google prefilled link that includes both Question 1 and Question 2 entry IDs.')
-      return
-    }
-
-    async function autoFillGoogleForm() {
-      try {
-        const payload = new URLSearchParams()
-        payload.append(googleFormConfig.entryKeys[0], `Auto answer Q1 ${new Date().toISOString()}`)
-        payload.append(googleFormConfig.entryKeys[1], `Auto answer Q2 ${new Date().toISOString()}`)
-        payload.append('pageHistory', '0')
-
-        await fetch(googleFormConfig.responseUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-          body: payload.toString(),
-        })
-
-        setFormAutoStatus('Auto-fill + submit request sent to form.')
-        addActivity('Triggered Google Form auto-fill test')
-      } catch {
-        setFormAutoStatus('Auto-fill request attempted. Browser/network policy may limit verification.')
-      } finally {
-        setHasAutoFilledForm(true)
-      }
-    }
-
-    void autoFillGoogleForm()
-  }, [activeTab, hasAutoFilledForm, googleFormConfig])
+  }, [bubbleSize, dragPointerId, isDraggingBubble, isDraggingTracker, trackerWidth])
 
   const isPunchedIn = punchedInAt !== null && punchedOutAt === null
   const isOnBreak = breakStartedAt !== null
 
   function addActivity(action: string) {
-    setActivityLog((prev) => [...prev, { at: new Date().toISOString(), action }])
+    void action
   }
 
   function handlePunchIn() {
@@ -375,7 +312,7 @@ function App() {
     setPunchedOutAt(null)
     setBreakStartedAt(null)
     setAccumulatedBreakMs(0)
-    setActivityLog([{ at: new Date(ts).toISOString(), action: 'Punched in' }])
+    addActivity('Punched in')
   }
 
   function handleBreakToggle() {
@@ -406,7 +343,6 @@ function App() {
 
   const netWorkMs = Math.max(0, grossMs - currentBreakMs)
 
-  const activityCount = activityLog.length
   const selectedRebuttal = rebuttalQuestions.find((item) => item.id === selectedRebuttalId) ?? null
 
   function handlePunchOut() {
@@ -423,44 +359,6 @@ function App() {
     setAccumulatedBreakMs(finalBreakMs)
     setPunchedOutAt(ts)
     addActivity('Punched out')
-    void submitPunchOutToForm(ts, punchedInAt, finalBreakMs)
-  }
-
-  async function submitPunchOutToForm(punchOutTs: number, punchInTs: number, finalBreakMs: number) {
-    const finalGrossMs = Math.max(0, punchOutTs - punchInTs)
-    const finalNetMs = Math.max(0, finalGrossMs - finalBreakMs)
-    if (googleFormConfig.entryKeys.length < 2) {
-      setFormAutoStatus('Punch-out blocked: add a valid Google prefilled link with entry IDs for Q1/Q2.')
-      setActiveTab('form')
-      return
-    }
-
-    const payload = new URLSearchParams()
-    payload.append(
-      googleFormConfig.entryKeys[0],
-      `PunchIn ${fmt.format(new Date(punchInTs))} | PunchOut ${fmt.format(new Date(punchOutTs))}`,
-    )
-    payload.append(
-      googleFormConfig.entryKeys[1],
-      `Work ${toDuration(finalNetMs)} | Break ${toDuration(finalBreakMs)} | Gross ${toDuration(finalGrossMs)} | Activity ${activityCount}`,
-    )
-    payload.append('pageHistory', '0')
-
-    try {
-      await fetch(googleFormConfig.responseUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-        body: payload.toString(),
-      })
-      setFormAutoStatus('Punch-out submitted to form.')
-      addActivity('Punch-out submission sent to Google Form')
-    } catch {
-      setFormAutoStatus('Punch-out submission attempted. Browser/network policy may limit verification.')
-    } finally {
-      setHasAutoFilledForm(true)
-      setActiveTab('form')
-    }
   }
 
   function toggleChecklist(id: string) {
@@ -517,9 +415,21 @@ function App() {
     setIsTrackerMinimized(false)
   }
 
+  function handleTrackerPointerDown(event: ReactPointerEvent<HTMLElement>) {
+    const target = event.target as HTMLElement
+    if (target.closest('button, input, textarea, select, label')) return
+    event.preventDefault()
+    trackerDragOffset.current = {
+      x: event.clientX - trackerPosition.x,
+      y: event.clientY - trackerPosition.y,
+    }
+    setDragPointerId(event.pointerId)
+    setIsDraggingTracker(true)
+  }
+
   function handleLoginSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (usernameInput.trim() !== accessUsername || passwordInput !== accessPassword) {
+    if (usernameInput.trim() !== accessUsername.trim() || passwordInput !== accessPassword) {
       setLoginError('Invalid username or password.')
       return
     }
@@ -606,9 +516,6 @@ function App() {
           >
             Call Checklist
           </button>
-          <button className={activeTab === 'form' ? 'tab active' : 'tab'} onClick={() => setActiveTab('form')}>
-            Auto Form
-          </button>
         </div>
 
         <div className="tab-content">
@@ -657,7 +564,7 @@ function App() {
                 </article>
               )}
             </div>
-          ) : activeTab === 'checklist' ? (
+          ) : (
             <div className="list-wrap">
               {checklistItems.map((item) => (
                 <label key={item.id} className="check-card">
@@ -666,31 +573,6 @@ function App() {
                 </label>
               ))}
             </div>
-          ) : (
-            <section className="form-embed-card">
-              <p className="form-status">{formAutoStatus}</p>
-              <label className="prefill-link-field">
-                <span>Google prefilled link (required for auto-submit)</span>
-                <input
-                  type="url"
-                  value={googleFormPrefillLink}
-                  onChange={(event) => {
-                    setGoogleFormPrefillLink(event.target.value)
-                    setHasAutoFilledForm(false)
-                    setFormAutoStatus('Auto-fill pending...')
-                  }}
-                />
-              </label>
-              <div className="iframe-wrap">
-                <iframe
-                  title="Google Test Form"
-                  src={googleFormConfig.iframeUrl}
-                  className="locked-iframe"
-                  loading="lazy"
-                />
-                <div className="iframe-blocker">Auto mode: iframe interaction is locked</div>
-              </div>
-            </section>
           )}
         </div>
       </section>
@@ -705,7 +587,11 @@ function App() {
           Open
         </button>
       ) : (
-        <aside className="floating-time-card">
+        <aside
+          className={isDraggingTracker ? 'floating-time-card dragging' : 'floating-time-card'}
+          style={{ left: `${trackerPosition.x}px`, top: `${trackerPosition.y}px` }}
+          onPointerDown={handleTrackerPointerDown}
+        >
           <div className="metrics">
             <p>
               <strong>Status:</strong> {isPunchedIn ? (isOnBreak ? 'On Break' : 'Working') : 'Not Punched In'}
@@ -728,7 +614,7 @@ function App() {
               {isOnBreak ? 'End Break' : 'Start Break'}
             </button>
             <button onClick={handlePunchOut} disabled={!isPunchedIn}>
-              Punch Out & Submit
+              Punch Out
             </button>
           </div>
         </aside>
