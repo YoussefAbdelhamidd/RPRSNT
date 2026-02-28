@@ -220,14 +220,29 @@ function App() {
   const [isTrackerMinimized, setIsTrackerMinimized] = useState(false)
   const [bubblePosition, setBubblePosition] = useState({ x: 24, y: 120 })
   const [trackerPosition, setTrackerPosition] = useState({ x: 24, y: 24 })
+  const [trackerTilt, setTrackerTilt] = useState(0)
+  const [bubbleTilt, setBubbleTilt] = useState(0)
   const [isDraggingBubble, setIsDraggingBubble] = useState(false)
   const [isDraggingTracker, setIsDraggingTracker] = useState(false)
   const [dragPointerId, setDragPointerId] = useState<number | null>(null)
+  const [gameScore, setGameScore] = useState(0)
+  const [gameStreak, setGameStreak] = useState(0)
+  const [gameTarget, setGameTarget] = useState({ x: 42, y: 42 })
   const bubbleDragOffset = useRef({ x: 0, y: 0 })
   const trackerDragOffset = useRef({ x: 0, y: 0 })
+  const bubbleVelocity = useRef({ x: 0, y: 0 })
+  const bubbleLastPointer = useRef({ x: 0, y: 0, time: 0 })
+  const trackerVelocity = useRef({ x: 0, y: 0 })
+  const trackerLastPointer = useRef({ x: 0, y: 0, time: 0 })
+  const bubblePhysicsFrame = useRef<number | null>(null)
+  const trackerPhysicsFrame = useRef<number | null>(null)
   const bubbleMoved = useRef(false)
   const bubbleSize = 68
   const trackerWidth = 440
+  const trackerHeight = 140
+  const gameWidth = 188
+  const gameHeight = 120
+  const targetSize = 26
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
@@ -266,21 +281,37 @@ function App() {
         const maxY = Math.max(0, window.innerHeight - bubbleSize)
         const nextX = event.clientX - bubbleDragOffset.current.x
         const nextY = event.clientY - bubbleDragOffset.current.y
+        const nowTime = performance.now()
+        const deltaTime = Math.max(1, nowTime - bubbleLastPointer.current.time)
+        bubbleVelocity.current = {
+          x: ((event.clientX - bubbleLastPointer.current.x) / deltaTime) * 16,
+          y: ((event.clientY - bubbleLastPointer.current.y) / deltaTime) * 16,
+        }
+        bubbleLastPointer.current = { x: event.clientX, y: event.clientY, time: nowTime }
         setBubblePosition({
           x: Math.min(Math.max(0, nextX), maxX),
           y: Math.min(Math.max(0, nextY), maxY),
         })
+        setBubbleTilt(Math.max(-10, Math.min(10, bubbleVelocity.current.x * 0.45)))
       }
 
       if (isDraggingTracker) {
         const maxX = Math.max(0, window.innerWidth - trackerWidth)
-        const maxY = Math.max(0, window.innerHeight - 140)
+        const maxY = Math.max(0, window.innerHeight - trackerHeight)
         const nextX = event.clientX - trackerDragOffset.current.x
         const nextY = event.clientY - trackerDragOffset.current.y
+        const nowTime = performance.now()
+        const deltaTime = Math.max(1, nowTime - trackerLastPointer.current.time)
+        trackerVelocity.current = {
+          x: ((event.clientX - trackerLastPointer.current.x) / deltaTime) * 16,
+          y: ((event.clientY - trackerLastPointer.current.y) / deltaTime) * 16,
+        }
+        trackerLastPointer.current = { x: event.clientX, y: event.clientY, time: nowTime }
         setTrackerPosition({
           x: Math.min(Math.max(0, nextX), maxX),
           y: Math.min(Math.max(0, nextY), maxY),
         })
+        setTrackerTilt(Math.max(-8, Math.min(8, trackerVelocity.current.x * 0.35)))
       }
     }
 
@@ -298,6 +329,126 @@ function App() {
       window.removeEventListener('pointerup', onPointerUp)
     }
   }, [bubbleSize, dragPointerId, isDraggingBubble, isDraggingTracker, trackerWidth])
+
+  useEffect(() => {
+    if (isDraggingBubble || !isTrackerMinimized) return
+    const threshold = 0.15
+    if (
+      Math.abs(bubbleVelocity.current.x) < threshold &&
+      Math.abs(bubbleVelocity.current.y) < threshold &&
+      Math.abs(bubbleTilt) < 0.1
+    ) {
+      setBubbleTilt(0)
+      return
+    }
+
+    function step() {
+      setBubblePosition((prev) => {
+        let nextX = prev.x + bubbleVelocity.current.x
+        let nextY = prev.y + bubbleVelocity.current.y
+        const maxX = Math.max(0, window.innerWidth - bubbleSize)
+        const maxY = Math.max(0, window.innerHeight - bubbleSize)
+
+        bubbleVelocity.current.x *= 0.965
+        bubbleVelocity.current.y *= 0.965
+
+        if (nextX <= 0 || nextX >= maxX) {
+          nextX = Math.min(Math.max(0, nextX), maxX)
+          bubbleVelocity.current.x *= -0.74
+        }
+
+        if (nextY <= 0 || nextY >= maxY) {
+          nextY = Math.min(Math.max(0, nextY), maxY)
+          bubbleVelocity.current.y *= -0.74
+        }
+
+        return { x: nextX, y: nextY }
+      })
+
+      setBubbleTilt((prev) => {
+        const next = prev * 0.9 + bubbleVelocity.current.x * 0.18
+        return Math.abs(next) < 0.1 ? 0 : next
+      })
+
+      if (
+        Math.abs(bubbleVelocity.current.x) >= threshold ||
+        Math.abs(bubbleVelocity.current.y) >= threshold ||
+        Math.abs(bubbleTilt) >= 0.1
+      ) {
+        bubblePhysicsFrame.current = window.requestAnimationFrame(step)
+      } else {
+        bubblePhysicsFrame.current = null
+      }
+    }
+
+    bubblePhysicsFrame.current = window.requestAnimationFrame(step)
+    return () => {
+      if (bubblePhysicsFrame.current !== null) {
+        window.cancelAnimationFrame(bubblePhysicsFrame.current)
+        bubblePhysicsFrame.current = null
+      }
+    }
+  }, [bubbleTilt, bubbleSize, isDraggingBubble, isTrackerMinimized])
+
+  useEffect(() => {
+    if (isDraggingTracker || isTrackerMinimized) return
+    const threshold = 0.15
+    if (
+      Math.abs(trackerVelocity.current.x) < threshold &&
+      Math.abs(trackerVelocity.current.y) < threshold &&
+      Math.abs(trackerTilt) < 0.1
+    ) {
+      setTrackerTilt(0)
+      return
+    }
+
+    function step() {
+      setTrackerPosition((prev) => {
+        let nextX = prev.x + trackerVelocity.current.x
+        let nextY = prev.y + trackerVelocity.current.y
+        const maxX = Math.max(0, window.innerWidth - trackerWidth)
+        const maxY = Math.max(0, window.innerHeight - trackerHeight)
+
+        trackerVelocity.current.x *= 0.96
+        trackerVelocity.current.y *= 0.96
+
+        if (nextX <= 0 || nextX >= maxX) {
+          nextX = Math.min(Math.max(0, nextX), maxX)
+          trackerVelocity.current.x *= -0.72
+        }
+
+        if (nextY <= 0 || nextY >= maxY) {
+          nextY = Math.min(Math.max(0, nextY), maxY)
+          trackerVelocity.current.y *= -0.72
+        }
+
+        return { x: nextX, y: nextY }
+      })
+
+      setTrackerTilt((prev) => {
+        const next = prev * 0.9 + trackerVelocity.current.x * 0.12
+        return Math.abs(next) < 0.1 ? 0 : next
+      })
+
+      if (
+        Math.abs(trackerVelocity.current.x) >= threshold ||
+        Math.abs(trackerVelocity.current.y) >= threshold ||
+        Math.abs(trackerTilt) >= 0.1
+      ) {
+        trackerPhysicsFrame.current = window.requestAnimationFrame(step)
+      } else {
+        trackerPhysicsFrame.current = null
+      }
+    }
+
+    trackerPhysicsFrame.current = window.requestAnimationFrame(step)
+    return () => {
+      if (trackerPhysicsFrame.current !== null) {
+        window.cancelAnimationFrame(trackerPhysicsFrame.current)
+        trackerPhysicsFrame.current = null
+      }
+    }
+  }, [isDraggingTracker, isTrackerMinimized, trackerTilt, trackerWidth])
 
   const isPunchedIn = punchedInAt !== null && punchedOutAt === null
   const isOnBreak = breakStartedAt !== null
@@ -399,6 +550,12 @@ function App() {
   function handleBubblePointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
     event.preventDefault()
     bubbleMoved.current = false
+    if (bubblePhysicsFrame.current !== null) {
+      window.cancelAnimationFrame(bubblePhysicsFrame.current)
+      bubblePhysicsFrame.current = null
+    }
+    bubbleVelocity.current = { x: 0, y: 0 }
+    bubbleLastPointer.current = { x: event.clientX, y: event.clientY, time: performance.now() }
     bubbleDragOffset.current = {
       x: event.clientX - bubblePosition.x,
       y: event.clientY - bubblePosition.y,
@@ -419,12 +576,40 @@ function App() {
     const target = event.target as HTMLElement
     if (target.closest('button, input, textarea, select, label')) return
     event.preventDefault()
+    if (trackerPhysicsFrame.current !== null) {
+      window.cancelAnimationFrame(trackerPhysicsFrame.current)
+      trackerPhysicsFrame.current = null
+    }
+    trackerVelocity.current = { x: 0, y: 0 }
+    trackerLastPointer.current = { x: event.clientX, y: event.clientY, time: performance.now() }
     trackerDragOffset.current = {
       x: event.clientX - trackerPosition.x,
       y: event.clientY - trackerPosition.y,
     }
     setDragPointerId(event.pointerId)
     setIsDraggingTracker(true)
+  }
+
+  function moveGameTarget() {
+    const padding = 10
+    const maxX = gameWidth - targetSize - padding
+    const maxY = gameHeight - targetSize - padding
+    setGameTarget({
+      x: Math.floor(Math.random() * Math.max(1, maxX - padding + 1)) + padding,
+      y: Math.floor(Math.random() * Math.max(1, maxY - padding + 1)) + padding,
+    })
+  }
+
+  function handleGameHit() {
+    setGameScore((prev) => prev + 1)
+    setGameStreak((prev) => prev + 1)
+    moveGameTarget()
+  }
+
+  function handleGameReset() {
+    setGameScore(0)
+    setGameStreak(0)
+    moveGameTarget()
   }
 
   function handleLoginSubmit(event: FormEvent<HTMLFormElement>) {
@@ -575,12 +760,43 @@ function App() {
             </div>
           )}
         </div>
+
+        <section className="game-card">
+          <div className="game-header">
+            <div>
+              <h2>Focus Dots</h2>
+              <p>Quiet click-target for idle moments between call actions.</p>
+            </div>
+            <button className="game-reset-btn" onClick={handleGameReset}>
+              Reset
+            </button>
+          </div>
+          <div className="game-meta">
+            <span>Score: {gameScore}</span>
+            <span>Streak: {gameStreak}</span>
+          </div>
+          <div className="game-board" onClick={() => setGameStreak(0)}>
+            <button
+              className="game-target"
+              style={{ left: `${gameTarget.x}px`, top: `${gameTarget.y}px` }}
+              onClick={(event) => {
+                event.stopPropagation()
+                handleGameHit()
+              }}
+              aria-label="Focus target"
+            />
+          </div>
+        </section>
       </section>
 
       {isTrackerMinimized ? (
         <button
           className={isDraggingBubble ? 'tracker-bubble dragging' : 'tracker-bubble'}
-          style={{ left: `${bubblePosition.x}px`, top: `${bubblePosition.y}px` }}
+          style={{
+            left: `${bubblePosition.x}px`,
+            top: `${bubblePosition.y}px`,
+            transform: `rotate(${bubbleTilt}deg)`,
+          }}
           onPointerDown={handleBubblePointerDown}
           onClick={handleBubbleClick}
         >
@@ -589,7 +805,11 @@ function App() {
       ) : (
         <aside
           className={isDraggingTracker ? 'floating-time-card dragging' : 'floating-time-card'}
-          style={{ left: `${trackerPosition.x}px`, top: `${trackerPosition.y}px` }}
+          style={{
+            left: `${trackerPosition.x}px`,
+            top: `${trackerPosition.y}px`,
+            transform: `rotate(${trackerTilt}deg)`,
+          }}
           onPointerDown={handleTrackerPointerDown}
         >
           <div className="metrics">
