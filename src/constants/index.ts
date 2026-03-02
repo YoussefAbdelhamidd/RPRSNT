@@ -2,8 +2,34 @@ import type { RebuttalItem, ChecklistItem } from '../types'
 
 export const REBUTTAL_STORAGE_KEY = 'call-assistant-rebuttals-v1'
 export const ACCESS_SESSION_STORAGE_KEY = 'call-assistant-access-session-v1'
-export const ACCESS_USERNAME = 'admin'
-export const ACCESS_PASSWORD = '123456'
+
+export const AGENT_CREDENTIALS: Record<string, string> = {
+  'yamna.arif': 'yamna123',
+  'areeba.tahir': 'areeba123',
+  'abeera.qadeer': 'abeera123',
+  'abdullah.subhani': 'abdullah123',
+  'arham.amir': 'arham123',
+  'safa.mariam': 'safa123',
+  'muaaz.ahmed': 'muaaz123',
+  'mariam.mowafi': 'mariam123',
+  'maram.ahmed': 'maram123',
+  'ahmed.hossam': 'ahmed123',
+  'ibrahim.noby': 'ibrahim123',
+  'tamer.spahi': 'tamer123',
+  'jasmine.roushdy': 'jasmine123',
+  'hussien.abouziied': 'hussien123',
+  'abdullah.adel': 'abdullah123',
+  'mazin.ali': 'mazin123',
+  'abdelrahman.moustafa': 'abdelrahman123',
+  'andrew.sedrak': 'andrew123',
+  'mohamed.sami': 'mohamed123',
+  'youssef.alsaghier': 'youssef123',
+  'ahmed.yasser': 'ahmed123',
+  'Youssef.hasaay': '21122001_Psn',
+  'farah.ehab': 'fe2123456',
+  'Mariam.bannis': 'mb123456',
+  'seif.abady': 'sa123456',
+}
 
 export const INITIAL_REBUTTAL_QUESTIONS: RebuttalItem[] = [
   {

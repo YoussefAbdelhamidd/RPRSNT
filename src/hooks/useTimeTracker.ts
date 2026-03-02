@@ -114,6 +114,7 @@ export function useTimeTracker(
 
   function addCurrentBreakToType() {
     if (breakStartedAt === null || currentBreakType === null) return
+    if (currentBreakType === 'Ready') return
     const delta = Date.now() - breakStartedAt
     setBreakTimeByType((prev) => ({
       ...prev,
@@ -127,18 +128,21 @@ export function useTimeTracker(
     const ts = Date.now()
     setPunchedInAt(ts)
     setPunchedOutAt(null)
+    setBreakStartedAt(null)
+    setCurrentBreakType(null)
     setAccumulatedBreakMs(0)
-    setBreakStartedAt(ts)
-    setCurrentBreakType('Ready')
     onActivity?.('Punched in')
-    onActivity?.('Started break: Ready')
   }
 
   const punchOut = () => {
     if (!isPunchedIn || punchedInAt === null) return
     const ts = Date.now()
-    if (breakStartedAt !== null && currentBreakType !== null) {
+    if (breakStartedAt !== null && currentBreakType !== null && currentBreakType !== 'Ready') {
       const delta = ts - breakStartedAt
+      setBreakTimeByType((prev) => ({
+        ...prev,
+        [currentBreakType]: (prev[currentBreakType] ?? 0) + delta,
+      }))
       setAccumulatedBreakMs((prev) => prev + delta)
       setBreakStartedAt(null)
       setCurrentBreakType(null)
@@ -152,7 +156,21 @@ export function useTimeTracker(
   const startBreak = (type: BreakType) => {
     if (!isPunchedIn) return
     const ts = Date.now()
-    if (breakStartedAt !== null && currentBreakType !== null) {
+    if (type === 'Ready') {
+      if (breakStartedAt !== null && currentBreakType !== null && currentBreakType !== 'Ready') {
+        const delta = ts - breakStartedAt
+        setBreakTimeByType((prev) => ({
+          ...prev,
+          [currentBreakType]: (prev[currentBreakType] ?? 0) + delta,
+        }))
+        setAccumulatedBreakMs((prev) => prev + delta)
+        onActivity?.(`Ended break: ${currentBreakType}`)
+      }
+      setBreakStartedAt(null)
+      setCurrentBreakType(null)
+      return
+    }
+    if (breakStartedAt !== null && currentBreakType !== null && currentBreakType !== 'Ready') {
       const delta = ts - breakStartedAt
       setBreakTimeByType((prev) => ({
         ...prev,

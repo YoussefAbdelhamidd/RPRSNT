@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { LoginForm } from '../components'
-import { ACCESS_USERNAME, ACCESS_PASSWORD } from '../constants'
+import { AGENT_CREDENTIALS } from '../constants'
 import { grantAccessSession } from '../utils'
 
 export type LoginPageProps = {
@@ -9,14 +9,18 @@ export type LoginPageProps = {
   showHint?: boolean
 }
 
-export function LoginPage({ onAuthenticated, showHint = true }: LoginPageProps) {
+export function LoginPage({ onAuthenticated, showHint = false }: LoginPageProps) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (username.trim() !== ACCESS_USERNAME.trim() || password !== ACCESS_PASSWORD) {
+    const trimmed = username.trim()
+    const entry = Object.entries(AGENT_CREDENTIALS).find(
+      ([u]) => u.toLowerCase() === trimmed.toLowerCase()
+    )
+    if (!entry || password !== entry[1]) {
       setError('Invalid username or password.')
       return
     }
@@ -51,8 +55,8 @@ export function LoginPage({ onAuthenticated, showHint = true }: LoginPageProps) 
             clearError()
           }}
           onSubmit={handleSubmit}
-          hintUsername={showHint ? ACCESS_USERNAME : undefined}
-          hintPassword={showHint ? ACCESS_PASSWORD : undefined}
+          hintUsername={showHint ? Object.keys(AGENT_CREDENTIALS)[0] : undefined}
+          hintPassword={showHint ? Object.values(AGENT_CREDENTIALS)[0] : undefined}
         />
       </section>
     </main>

@@ -313,7 +313,11 @@ export function TimeTracker({
     setIsDraggingTracker(true)
   }
 
-  const statusLabel = isPunchedIn ? (isOnBreak ? 'On Break' : 'Working') : 'Not Punched In'
+  const statusLabel = isPunchedIn
+    ? isOnBreak && currentBreakType
+      ? currentBreakType
+      : 'Ready'
+    : 'Not Punched In'
 
   if (isMinimized) {
     return (
@@ -360,19 +364,21 @@ export function TimeTracker({
           <div className="text-base font-bold text-white tabular-nums">{currentBreakDuration}</div>
         </div>
         <div className="pt-2 border-t border-[rgba(223,232,247,0.15)]">
-          <div className="text-[0.7rem] uppercase tracking-wider text-[#94a8c4] font-semibold mb-1.5">Aux by type</div>
+          <div className="text-[0.7rem] uppercase tracking-wider text-[#94a8c4] font-semibold mb-1.5">Break time by type</div>
           <div className="flex flex-col gap-0.5 max-h-24 overflow-y-auto">
-            {breakTypeOptions.map((type) => {
-              const savedMs = breakTimeByType[type] ?? 0
-              const currentSegment = currentBreakType === type ? currentBreakSegmentMs : 0
-              const ms = savedMs + currentSegment
-              return (
-                <div key={type} className="flex justify-between items-baseline gap-2 text-sm">
-                  <span className="text-[#c8d8f2] truncate">{type}</span>
-                  <span className="text-white font-bold tabular-nums shrink-0">{toDuration(ms)}</span>
-                </div>
-              )
-            })}
+            {breakTypeOptions
+              .filter((type) => type !== 'Ready')
+              .map((type) => {
+                const savedMs = breakTimeByType[type] ?? 0
+                const currentSegment = currentBreakType === type ? currentBreakSegmentMs : 0
+                const ms = savedMs + currentSegment
+                return (
+                  <div key={type} className="flex justify-between items-baseline gap-2 text-sm">
+                    <span className="text-[#c8d8f2] truncate">{type}</span>
+                    <span className="text-white font-bold tabular-nums shrink-0">{toDuration(ms)}</span>
+                  </div>
+                )
+              })}
           </div>
         </div>
       </div>
@@ -406,7 +412,14 @@ export function TimeTracker({
           ))}
         </select>
         {isOnBreak ? (
-          <button type="button" className={actionBtnClass} onClick={onEndBreak}>
+          <button
+            type="button"
+            className={actionBtnClass}
+            onClick={() => {
+              onEndBreak()
+              setSelectedBreakType('Ready')
+            }}
+          >
             End Break
           </button>
         ) : null}

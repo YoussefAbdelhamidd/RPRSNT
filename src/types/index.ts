@@ -1,4 +1,4 @@
-export type TabKey = 'rebuttal' | 'checklist'
+export type TabKey = 'rebuttal' | 'checklist' | 'script'
 
 export type RebuttalItem = {
   id: string

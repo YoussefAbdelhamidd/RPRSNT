@@ -5,7 +5,8 @@ import {
   TabRow,
   RebuttalTab,
   ChecklistTab,
- 
+  ScriptTab,
+  FocusDotsGame,
   TimeTracker,
 } from '../components'
 import { useTimeTracker, BREAK_TYPE_OPTIONS } from '../hooks'
@@ -15,6 +16,7 @@ import { getInitialRebuttals, saveRebuttals } from '../utils'
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'rebuttal', label: 'Rebuttal Questions' },
   { key: 'checklist', label: 'Call Checklist' },
+  { key: 'script', label: 'Script' },
 ]
 
 function noop(_message: string) {}
@@ -106,7 +108,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
         />
 
         <div className="mt-4">
-          {activeTab === 'rebuttal' ? (
+          {activeTab === 'rebuttal' && (
             <RebuttalTab
               rebuttals={rebuttals}
               selectedId={selectedRebuttalId}
@@ -116,12 +118,14 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
               onUpdateQuestion={handleUpdateQuestion}
               onUpdateResponse={handleUpdateResponse}
             />
-          ) : (
+          )}
+          {activeTab === 'checklist' && (
             <ChecklistTab items={checklistItems} onToggle={handleToggleChecklist} />
           )}
+          {activeTab === 'script' && <ScriptTab />}
         </div>
 
-     
+        <FocusDotsGame />
       </section>
 
       <TimeTracker
