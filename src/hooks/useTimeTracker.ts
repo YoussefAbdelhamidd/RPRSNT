@@ -197,6 +197,11 @@ export function useTimeTracker(
   }
 
   const punchIn = () => {
+    // If there is an active session (punched in and not punched out), do not reset it.
+    if (punchedInAt !== null && punchedOutAt === null) {
+      onActivity?.('Punch in ignored (already punched in)')
+      return
+    }
     const ts = Date.now()
     setPunchedInAt(ts)
     setPunchedOutAt(null)

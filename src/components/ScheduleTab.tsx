@@ -49,6 +49,9 @@ export function ScheduleTab() {
     time: '9:00 AM',
     title: '',
     type: 'Callback',
+    contactName: '',
+    phone: '',
+    notes: '',
   })
 
   useEffect(() => {
@@ -92,8 +95,26 @@ export function ScheduleTab() {
   const handleAddDailyItem = () => {
     if (!newItem.time || !newItem.title?.trim()) return
     const id = `ds-${Date.now()}`
-    setDailyItems((prev) => [...prev, { id, time: newItem.time!, title: newItem.title!.trim(), type: newItem.type ?? 'Callback' }])
-    setNewItem({ time: '9:00 AM', title: '', type: 'Callback' })
+    setDailyItems((prev) => [
+      ...prev,
+      {
+        id,
+        time: newItem.time!,
+        title: newItem.title!.trim(),
+        type: newItem.type ?? 'Callback',
+        contactName: newItem.contactName?.trim() ?? '',
+        phone: newItem.phone?.trim() ?? '',
+        notes: newItem.notes?.trim() ?? '',
+      },
+    ])
+    setNewItem({
+      time: '9:00 AM',
+      title: '',
+      type: 'Callback',
+      contactName: '',
+      phone: '',
+      notes: '',
+    })
   }
 
   const handleStartEdit = (item: DailyScheduleItem) => {
@@ -171,11 +192,11 @@ export function ScheduleTab() {
       <section className="rounded-xl border border-[#dde5f2] bg-[#f8faff] p-5">
         <h2 className="mb-1 text-lg font-bold text-[#10233f]">Daily Schedule</h2>
         <p className="mb-4 text-sm text-[#5f7087]">
-          Add callbacks and tasks. You&apos;ll get a notice when it&apos;s time.
+          Add callbacks and tasks with contact details. You&apos;ll get a notice when it&apos;s time.
         </p>
 
-        <div className="mb-4 flex flex-wrap items-end gap-2">
-          <label className="flex flex-col gap-1 text-sm">
+        <div className="mb-4 grid grid-cols-1 gap-2 md:flex md:flex-wrap md:items-end">
+          <label className="flex flex-col gap-1 text-sm md:w-auto">
             <span className="text-[#5f7087]">Time</span>
             <select
               value={newItem.time}
@@ -187,7 +208,7 @@ export function ScheduleTab() {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1 text-sm md:w-auto">
             <span className="text-[#5f7087]">Type</span>
             <select
               value={newItem.type}
@@ -201,13 +222,33 @@ export function ScheduleTab() {
               ))}
             </select>
           </label>
-          <label className="flex flex-1 min-w-[140px] flex-col gap-1 text-sm">
+          <label className="flex flex-1 min-w-[140px] flex-col gap-1 text-sm md:w-auto">
             <span className="text-[#5f7087]">Title</span>
             <input
               type="text"
               value={newItem.title ?? ''}
               onChange={(e) => setNewItem((p) => ({ ...p, title: e.target.value }))}
               placeholder="e.g. Callback - ABC Corp"
+              className="rounded-lg border border-[#cad7ea] px-3 py-2 text-[#10233f]"
+            />
+          </label>
+          <label className="flex flex-1 min-w-[140px] flex-col gap-1 text-sm md:w-auto">
+            <span className="text-[#5f7087]">Name</span>
+            <input
+              type="text"
+              value={newItem.contactName ?? ''}
+              onChange={(e) => setNewItem((p) => ({ ...p, contactName: e.target.value }))}
+              placeholder="Customer name"
+              className="rounded-lg border border-[#cad7ea] px-3 py-2 text-[#10233f]"
+            />
+          </label>
+          <label className="flex flex-1 min-w-[140px] flex-col gap-1 text-sm md:w-auto">
+            <span className="text-[#5f7087]">Phone</span>
+            <input
+              type="tel"
+              value={newItem.phone ?? ''}
+              onChange={(e) => setNewItem((p) => ({ ...p, phone: e.target.value }))}
+              placeholder="Phone number"
               className="rounded-lg border border-[#cad7ea] px-3 py-2 text-[#10233f]"
             />
           </label>
@@ -225,70 +266,111 @@ export function ScheduleTab() {
           {sortedDailyItems.map((item) => (
             <li
               key={item.id}
-              className="flex flex-wrap items-center gap-3 rounded-lg border border-[#dde5f2] bg-white px-4 py-3"
+              className="flex flex-col gap-2 rounded-lg border border-[#dde5f2] bg-white px-4 py-3"
             >
               {editingId === item.id && editDraft ? (
-                <>
-                  <select
-                    value={editDraft.time}
-                    onChange={(e) => setEditDraft((p) => p && { ...p, time: e.target.value })}
-                    className="rounded border border-[#cad7ea] px-2 py-1 text-sm"
-                  >
-                    {TIME_OPTIONS.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={editDraft.type}
-                    onChange={(e) =>
-                      setEditDraft((p) => p && { ...p, type: e.target.value as DailyScheduleItemType })
-                    }
-                    className="rounded border border-[#cad7ea] px-2 py-1 text-sm"
-                  >
-                    {SCHEDULE_TYPES.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    value={editDraft.title}
-                    onChange={(e) => setEditDraft((p) => p && { ...p, title: e.target.value })}
-                    className="min-w-[140px] flex-1 rounded border border-[#cad7ea] px-2 py-1 text-sm"
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={editDraft.time}
+                      onChange={(e) => setEditDraft((p) => p && { ...p, time: e.target.value })}
+                      className="rounded border border-[#cad7ea] px-2 py-1 text-sm"
+                    >
+                      {TIME_OPTIONS.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={editDraft.type}
+                      onChange={(e) =>
+                        setEditDraft((p) => p && { ...p, type: e.target.value as DailyScheduleItemType })
+                      }
+                      className="rounded border border-[#cad7ea] px-2 py-1 text-sm"
+                    >
+                      {SCHEDULE_TYPES.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={editDraft.title}
+                      onChange={(e) => setEditDraft((p) => p && { ...p, title: e.target.value })}
+                      className="min-w-[140px] flex-1 rounded border border-[#cad7ea] px-2 py-1 text-sm"
+                      placeholder="Title"
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="text"
+                      value={editDraft.contactName ?? ''}
+                      onChange={(e) => setEditDraft((p) => p && { ...p, contactName: e.target.value })}
+                      className="min-w-[140px] rounded border border-[#cad7ea] px-2 py-1 text-sm"
+                      placeholder="Name"
+                    />
+                    <input
+                      type="tel"
+                      value={editDraft.phone ?? ''}
+                      onChange={(e) => setEditDraft((p) => p && { ...p, phone: e.target.value })}
+                      className="min-w-[140px] rounded border border-[#cad7ea] px-2 py-1 text-sm"
+                      placeholder="Phone"
+                    />
+                  </div>
+                  <textarea
+                    value={editDraft.notes ?? ''}
+                    onChange={(e) => setEditDraft((p) => p && { ...p, notes: e.target.value })}
+                    className="w-full rounded border border-[#cad7ea] px-2 py-1 text-sm"
+                    rows={2}
+                    placeholder="Notes"
                   />
-                  <button
-                    type="button"
-                    onClick={handleSaveEdit}
-                    className="rounded px-2 py-1 text-sm text-[#5f7087] hover:bg-[#f3f6fc]"
-                  >
-                    Done
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteDailyItem(item.id)}
-                    className="rounded px-2 py-1 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    Delete
-                  </button>
-                </>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSaveEdit}
+                      className="rounded px-2 py-1 text-sm text-[#5f7087] hover:bg-[#f3f6fc]"
+                    >
+                      Done
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteDailyItem(item.id)}
+                      className="rounded px-2 py-1 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
               ) : (
-                <>
-                  <span className="min-w-20 font-semibold text-[#10233f]">
-                    {item.time}
-                  </span>
-                  <span
-                    className={`rounded px-2 py-0.5 text-xs font-medium ${getTypeBadgeClass(item.type)}`}
-                  >
-                    {item.type}
-                  </span>
-                  <span className="flex-1 text-[#233955]">{item.title}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleStartEdit(item)}
-                    className="rounded px-2 py-1 text-sm text-[#5f7087] hover:bg-[#f3f6fc]"
-                  >
-                    Edit
-                  </button>
-                </>
+                <div className="flex flex-col gap-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="min-w-20 font-semibold text-[#10233f]">
+                      {item.time}
+                    </span>
+                    <span
+                      className={`rounded px-2 py-0.5 text-xs font-medium ${getTypeBadgeClass(item.type)}`}
+                    >
+                      {item.type}
+                    </span>
+                    <span className="flex-1 text-[#233955]">{item.title}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleStartEdit(item)}
+                      className="rounded px-2 py-1 text-sm text-[#5f7087] hover:bg-[#f3f6fc]"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                  {(item.contactName || item.phone) && (
+                    <div className="text-xs text-[#5f7087] flex flex-wrap gap-3">
+                      {item.contactName && <span>Name: {item.contactName}</span>}
+                      {item.phone && <span>Phone: {item.phone}</span>}
+                    </div>
+                  )}
+                  {item.notes && (
+                    <div className="text-xs text-[#233955]">
+                      Notes: {item.notes}
+                    </div>
+                  )}
+                </div>
               )}
             </li>
           ))}

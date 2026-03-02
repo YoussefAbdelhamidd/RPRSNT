@@ -57,13 +57,25 @@ export function getDailySchedule(): DailyScheduleItem[] {
     if (!raw) return INITIAL_DAILY_SCHEDULE
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return INITIAL_DAILY_SCHEDULE
-    const cleaned = parsed.filter(
-      (item): item is DailyScheduleItem =>
+    const cleaned: DailyScheduleItem[] = []
+    for (const item of parsed) {
+      if (
         typeof item?.id === 'string' &&
         typeof item?.time === 'string' &&
         typeof item?.title === 'string' &&
-        typeof item?.type === 'string',
-    )
+        typeof item?.type === 'string'
+      ) {
+        cleaned.push({
+          id: item.id,
+          time: item.time,
+          title: item.title,
+          type: item.type,
+          contactName: typeof item.contactName === 'string' ? item.contactName : '',
+          phone: typeof item.phone === 'string' ? item.phone : '',
+          notes: typeof item.notes === 'string' ? item.notes : '',
+        })
+      }
+    }
     return cleaned.length > 0 ? cleaned : INITIAL_DAILY_SCHEDULE
   } catch {
     return INITIAL_DAILY_SCHEDULE

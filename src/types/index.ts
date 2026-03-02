@@ -7,6 +7,9 @@ export type DailyScheduleItem = {
   time: string // e.g. "9:00 AM"
   title: string
   type: DailyScheduleItemType
+  contactName?: string
+  phone?: string
+  notes?: string
 }
 
 export type WorkingDayItem = {

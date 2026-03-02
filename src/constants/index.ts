@@ -163,10 +163,42 @@ export const INITIAL_REBUTTAL_QUESTIONS: RebuttalItem[] = [
 ]
 
 export const INITIAL_DAILY_SCHEDULE: DailyScheduleItem[] = [
-  { id: 'ds1', time: '9:00 AM', title: 'Team standup', type: 'Meeting' },
-  { id: 'ds2', time: '10:30 AM', title: 'Call block', type: 'Call' },
-  { id: 'ds3', time: '2:00 PM', title: 'Lunch break', type: 'Break' },
-  { id: 'ds4', time: '4:30 PM', title: 'Punch-out & wrap-up', type: 'Admin' },
+  {
+    id: 'ds1',
+    time: '9:00 AM',
+    title: 'Team standup',
+    type: 'Meeting',
+    contactName: '',
+    phone: '',
+    notes: '',
+  },
+  {
+    id: 'ds2',
+    time: '10:30 AM',
+    title: 'Call block',
+    type: 'Call',
+    contactName: '',
+    phone: '',
+    notes: '',
+  },
+  {
+    id: 'ds3',
+    time: '2:00 PM',
+    title: 'Lunch break',
+    type: 'Break',
+    contactName: '',
+    phone: '',
+    notes: '',
+  },
+  {
+    id: 'ds4',
+    time: '4:30 PM',
+    title: 'Punch-out & wrap-up',
+    type: 'Admin',
+    contactName: '',
+    phone: '',
+    notes: '',
+  },
 ]
 
 export const INITIAL_WORKING_DAYS: WorkingDayItem[] = [
