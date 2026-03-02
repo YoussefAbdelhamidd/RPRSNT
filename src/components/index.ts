@@ -4,6 +4,7 @@ export { TabRow } from './TabRow'
 export { RebuttalTab } from './RebuttalTab'
 export { ChecklistTab } from './ChecklistTab'
 export { ScriptTab } from './ScriptTab'
+export { ScheduleTab } from './ScheduleTab'
 export { FocusDotsGame } from './FocusDotsGame'
 export { TimeTracker } from './TimeTracker'
 

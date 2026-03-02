@@ -39,7 +39,7 @@ const actionBtnClass =
 const metricsColumnClass =
   'flex flex-col justify-center gap-3 min-w-0 flex-1 pr-5'
 const breakDropdownClass =
-  'w-full min-w-[120px] rounded-lg border border-[rgba(223,232,247,0.25)] bg-[rgba(223,232,247,0.1)] px-3 py-2 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-[#94a8c4] disabled:opacity-60 disabled:cursor-not-allowed'
+  'w-full min-w-[120px] rounded-lg border border-[rgba(223,232,247,0.25)] bg-[#10233f] px-3 py-2 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-[#94a8c4] disabled:opacity-60 disabled:cursor-not-allowed [&_option]:bg-[#10233f] [&_option]:text-white'
 
 export function TimeTracker({
   isPunchedIn,

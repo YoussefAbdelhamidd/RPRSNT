@@ -6,17 +6,17 @@ import {
   RebuttalTab,
   ChecklistTab,
   ScriptTab,
-  FocusDotsGame,
+  ScheduleTab,
   TimeTracker,
 } from '../components'
 import { useTimeTracker, BREAK_TYPE_OPTIONS } from '../hooks'
-import { INITIAL_CHECKLIST_ITEMS } from '../constants'
-import { getInitialRebuttals, saveRebuttals } from '../utils'
+import { getInitialRebuttals, saveRebuttals, getChecklist, saveChecklist } from '../utils'
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'rebuttal', label: 'Rebuttal Questions' },
   { key: 'checklist', label: 'Call Checklist' },
   { key: 'script', label: 'Script' },
+  { key: 'schedule', label: 'Schedule' },
 ]
 
 function noop(_message: string) {}
@@ -29,7 +29,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('rebuttal')
   const [rebuttals, setRebuttals] = useState<RebuttalItem[]>(getInitialRebuttals)
   const [selectedRebuttalId, setSelectedRebuttalId] = useState('')
-  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(INITIAL_CHECKLIST_ITEMS)
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(getChecklist)
   const [isTrackerMinimized, setIsTrackerMinimized] = useState(false)
 
   const timeTracker = useTimeTracker(noop)
@@ -84,6 +84,16 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     )
   }
 
+  const handleUpdateChecklistNotes = (id: string, notes: string) => {
+    setChecklistItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, notes } : item)),
+    )
+  }
+
+  const handleSubmitChecklist = () => {
+    saveChecklist(checklistItems)
+  }
+
   return (
     <main className="min-h-screen p-8 max-md:p-4 max-md:pb-72 bg-gradient-to-br from-[#f5f7fb] to-[#e8eef9] text-[#0e1a2b]">
       <section className="max-w-[900px] mx-auto bg-white rounded-2xl p-6 shadow-lg">
@@ -120,12 +130,18 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
             />
           )}
           {activeTab === 'checklist' && (
-            <ChecklistTab items={checklistItems} onToggle={handleToggleChecklist} />
+            <ChecklistTab
+              items={checklistItems}
+              onToggle={handleToggleChecklist}
+              onUpdateNotes={handleUpdateChecklistNotes}
+              onSubmit={handleSubmitChecklist}
+            />
           )}
           {activeTab === 'script' && <ScriptTab />}
+          {activeTab === 'schedule' && <ScheduleTab />}
         </div>
 
-        <FocusDotsGame />
+     
       </section>
 
       <TimeTracker

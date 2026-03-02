@@ -36,7 +36,7 @@ export function LoginPage({ onAuthenticated, showHint = false }: LoginPageProps)
   }
 
   return (
-    <main className="min-h-screen grid place-items-center p-6 bg-gradient-to-br from-[#f5f7fb] to-[#e8eef9]">
+    <main className="min-h-screen grid place-items-center p-6 bg-linear-to-br from-[#f5f7fb] to-[#e8eef9]">
       <section className="w-full max-w-[460px] bg-white rounded-[18px] p-6 shadow-lg">
         <h1 className="m-0 text-[1.9rem]">Secure Access</h1>
         <p className="mt-1.5 text-[#4c5e75]">

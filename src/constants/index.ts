@@ -1,6 +1,9 @@
-import type { RebuttalItem, ChecklistItem } from '../types'
+import type { RebuttalItem, ChecklistItem, DailyScheduleItem, WorkingDayItem } from '../types'
 
 export const REBUTTAL_STORAGE_KEY = 'call-assistant-rebuttals-v1'
+export const DAILY_SCHEDULE_STORAGE_KEY = 'call-assistant-daily-schedule-v1'
+export const WORKING_DAYS_STORAGE_KEY = 'call-assistant-working-days-v1'
+export const CHECKLIST_STORAGE_KEY = 'call-assistant-checklist-v1'
 export const ACCESS_SESSION_STORAGE_KEY = 'call-assistant-access-session-v1'
 
 export const AGENT_CREDENTIALS: Record<string, string> = {
@@ -159,15 +162,32 @@ export const INITIAL_REBUTTAL_QUESTIONS: RebuttalItem[] = [
   },
 ]
 
+export const INITIAL_DAILY_SCHEDULE: DailyScheduleItem[] = [
+  { id: 'ds1', time: '9:00 AM', title: 'Team standup', type: 'Meeting' },
+  { id: 'ds2', time: '10:30 AM', title: 'Call block', type: 'Call' },
+  { id: 'ds3', time: '2:00 PM', title: 'Lunch break', type: 'Break' },
+  { id: 'ds4', time: '4:30 PM', title: 'Punch-out & wrap-up', type: 'Admin' },
+]
+
+export const INITIAL_WORKING_DAYS: WorkingDayItem[] = [
+  { day: 'Mon', hasShift: true, shiftStartTime: '9:00 AM' },
+  { day: 'Tue', hasShift: true, shiftStartTime: '9:00 AM' },
+  { day: 'Wed', hasShift: true, shiftStartTime: '9:00 AM' },
+  { day: 'Thu', hasShift: true, shiftStartTime: '9:00 AM' },
+  { day: 'Fri', hasShift: true, shiftStartTime: '9:00 AM' },
+  { day: 'Sat', hasShift: false, shiftStartTime: '9:00 AM' },
+  { day: 'Sun', hasShift: false, shiftStartTime: '9:00 AM' },
+]
+
 export const INITIAL_CHECKLIST_ITEMS: ChecklistItem[] = [
-  { id: 'c1', label: 'Opened call and set agenda', checked: false },
-  { id: 'c2', label: 'Verified identity and customer details', checked: false },
-  { id: 'c3', label: 'Explained program vs alternatives clearly', checked: false },
-  { id: 'c4', label: 'Handled contract disclosure concerns', checked: false },
-  { id: 'c5', label: 'Handled payment affordability objection', checked: false },
-  { id: 'c6', label: 'Handled late payment concern', checked: false },
-  { id: 'c7', label: 'Handled tax implication concern (no guarantees)', checked: false },
-  { id: 'c8', label: 'Handled trust/privacy data source concern', checked: false },
-  { id: 'c9', label: 'Confirmed customer comfort with secure form flow', checked: false },
-  { id: 'c10', label: 'Shared next steps and asked for decision', checked: false },
+  { id: 'c1', label: 'Opened call and set agenda', checked: false, notes: '' },
+  { id: 'c2', label: 'Verified identity and customer details', checked: false, notes: '' },
+  { id: 'c3', label: 'Explained program vs alternatives clearly', checked: false, notes: '' },
+  { id: 'c4', label: 'Handled contract disclosure concerns', checked: false, notes: '' },
+  { id: 'c5', label: 'Handled payment affordability objection', checked: false, notes: '' },
+  { id: 'c6', label: 'Handled late payment concern', checked: false, notes: '' },
+  { id: 'c7', label: 'Handled tax implication concern (no guarantees)', checked: false, notes: '' },
+  { id: 'c8', label: 'Handled trust/privacy data source concern', checked: false, notes: '' },
+  { id: 'c9', label: 'Confirmed customer comfort with secure form flow', checked: false, notes: '' },
+  { id: 'c10', label: 'Shared next steps and asked for decision', checked: false, notes: '' },
 ]

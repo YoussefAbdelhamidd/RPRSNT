@@ -18,30 +18,71 @@ export const BREAK_TYPE_OPTIONS: BreakType[] = [
   'Training',
 ]
 
-const AUX_TIME_STORAGE_KEY = 'call-assistant-aux-time-by-type-v1'
+const SESSION_STORAGE_KEY = 'call-assistant-time-tracker-session-v1'
 
-function getInitialBreakTimeByType(): Record<string, number> {
-  if (typeof window === 'undefined') return {}
+type StoredSession = {
+  punchedInAt: number
+  breakStartedAt: number | null
+  currentBreakType: BreakType | null
+  accumulatedBreakMs: number
+  breakTimeByType: Record<string, number>
+}
+
+function loadSession(): StoredSession | null {
+  if (typeof window === 'undefined') return null
   try {
-    const raw = window.localStorage.getItem(AUX_TIME_STORAGE_KEY)
-    if (!raw) return {}
+    const raw = window.localStorage.getItem(SESSION_STORAGE_KEY)
+    if (!raw) return null
     const parsed = JSON.parse(raw)
-    if (parsed === null || typeof parsed !== 'object') return {}
-    const out: Record<string, number> = {}
-    for (const [key, value] of Object.entries(parsed)) {
-      if (typeof key === 'string' && typeof value === 'number' && Number.isFinite(value))
-        out[key] = value
+    if (parsed === null || typeof parsed !== 'object') return null
+    const punchedInAt = typeof parsed.punchedInAt === 'number' && Number.isFinite(parsed.punchedInAt)
+      ? parsed.punchedInAt
+      : null
+    if (punchedInAt === null) return null
+    const breakStartedAt =
+      parsed.breakStartedAt != null && typeof parsed.breakStartedAt === 'number' && Number.isFinite(parsed.breakStartedAt)
+        ? parsed.breakStartedAt
+        : null
+    const currentBreakType =
+      typeof parsed.currentBreakType === 'string' && BREAK_TYPE_OPTIONS.includes(parsed.currentBreakType as BreakType)
+        ? (parsed.currentBreakType as BreakType)
+        : null
+    const accumulatedBreakMs =
+      typeof parsed.accumulatedBreakMs === 'number' && Number.isFinite(parsed.accumulatedBreakMs)
+        ? Math.max(0, parsed.accumulatedBreakMs)
+        : 0
+    const breakTimeByType: Record<string, number> = {}
+    if (parsed.breakTimeByType != null && typeof parsed.breakTimeByType === 'object') {
+      for (const [key, value] of Object.entries(parsed.breakTimeByType)) {
+        if (typeof key === 'string' && typeof value === 'number' && Number.isFinite(value))
+          breakTimeByType[key] = value
+      }
     }
-    return out
+    return {
+      punchedInAt,
+      breakStartedAt,
+      currentBreakType,
+      accumulatedBreakMs,
+      breakTimeByType,
+    }
   } catch {
-    return {}
+    return null
   }
 }
 
-function saveBreakTimeByType(data: Record<string, number>): void {
+function saveSession(session: StoredSession): void {
   if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(AUX_TIME_STORAGE_KEY, JSON.stringify(data))
+    window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session))
+  } catch {
+    // ignore
+  }
+}
+
+function clearSession(): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.removeItem(SESSION_STORAGE_KEY)
   } catch {
     // ignore
   }
@@ -74,15 +115,38 @@ export type TimeTrackerActions = {
   endBreak: () => void
 }
 
+function getInitialState() {
+  const session = loadSession()
+  if (!session) {
+    return {
+      punchedInAt: null as number | null,
+      punchedOutAt: null as number | null,
+      breakStartedAt: null as number | null,
+      currentBreakType: null as BreakType | null,
+      accumulatedBreakMs: 0,
+      breakTimeByType: {} as Record<string, number>,
+    }
+  }
+  return {
+    punchedInAt: session.punchedInAt,
+    punchedOutAt: null as number | null,
+    breakStartedAt: session.breakStartedAt,
+    currentBreakType: session.currentBreakType,
+    accumulatedBreakMs: session.accumulatedBreakMs,
+    breakTimeByType: session.breakTimeByType,
+  }
+}
+
 export function useTimeTracker(
   onActivity?: (action: string) => void
 ): TimeTrackerState & TimeTrackerComputed & TimeTrackerActions {
-  const [punchedInAt, setPunchedInAt] = useState<number | null>(null)
-  const [punchedOutAt, setPunchedOutAt] = useState<number | null>(null)
-  const [breakStartedAt, setBreakStartedAt] = useState<number | null>(null)
-  const [currentBreakType, setCurrentBreakType] = useState<BreakType | null>(null)
-  const [accumulatedBreakMs, setAccumulatedBreakMs] = useState(0)
-  const [breakTimeByType, setBreakTimeByType] = useState<Record<string, number>>(getInitialBreakTimeByType)
+  const [initial] = useState(getInitialState)
+  const [punchedInAt, setPunchedInAt] = useState<number | null>(initial.punchedInAt)
+  const [punchedOutAt, setPunchedOutAt] = useState<number | null>(initial.punchedOutAt)
+  const [breakStartedAt, setBreakStartedAt] = useState<number | null>(initial.breakStartedAt)
+  const [currentBreakType, setCurrentBreakType] = useState<BreakType | null>(initial.currentBreakType)
+  const [accumulatedBreakMs, setAccumulatedBreakMs] = useState(initial.accumulatedBreakMs)
+  const [breakTimeByType, setBreakTimeByType] = useState<Record<string, number>>(initial.breakTimeByType)
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
@@ -91,8 +155,16 @@ export function useTimeTracker(
   }, [])
 
   useEffect(() => {
-    saveBreakTimeByType(breakTimeByType)
-  }, [breakTimeByType])
+    if (punchedInAt !== null && punchedOutAt === null) {
+      saveSession({
+        punchedInAt,
+        breakStartedAt,
+        currentBreakType,
+        accumulatedBreakMs,
+        breakTimeByType,
+      })
+    }
+  }, [punchedInAt, punchedOutAt, breakStartedAt, currentBreakType, accumulatedBreakMs, breakTimeByType])
 
   const isPunchedIn = punchedInAt !== null && punchedOutAt === null
   const isOnBreak = breakStartedAt !== null
@@ -150,6 +222,7 @@ export function useTimeTracker(
     }
     setPunchedOutAt(ts)
     setBreakTimeByType({})
+    clearSession()
     onActivity?.('Punched out')
   }
 

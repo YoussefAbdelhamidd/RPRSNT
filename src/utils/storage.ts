@@ -1,8 +1,14 @@
-import type { RebuttalItem } from '../types'
+import type { RebuttalItem, DailyScheduleItem, WorkingDayItem, ChecklistItem } from '../types'
 import {
   REBUTTAL_STORAGE_KEY,
   ACCESS_SESSION_STORAGE_KEY,
   INITIAL_REBUTTAL_QUESTIONS,
+  DAILY_SCHEDULE_STORAGE_KEY,
+  WORKING_DAYS_STORAGE_KEY,
+  CHECKLIST_STORAGE_KEY,
+  INITIAL_DAILY_SCHEDULE,
+  INITIAL_WORKING_DAYS,
+  INITIAL_CHECKLIST_ITEMS,
 } from '../constants'
 
 export function getInitialRebuttals(): RebuttalItem[] {
@@ -42,4 +48,85 @@ export function grantAccessSession(): void {
 export function revokeAccessSession(): void {
   if (typeof window === 'undefined') return
   window.localStorage.removeItem(ACCESS_SESSION_STORAGE_KEY)
+}
+
+export function getDailySchedule(): DailyScheduleItem[] {
+  if (typeof window === 'undefined') return INITIAL_DAILY_SCHEDULE
+  try {
+    const raw = window.localStorage.getItem(DAILY_SCHEDULE_STORAGE_KEY)
+    if (!raw) return INITIAL_DAILY_SCHEDULE
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return INITIAL_DAILY_SCHEDULE
+    const cleaned = parsed.filter(
+      (item): item is DailyScheduleItem =>
+        typeof item?.id === 'string' &&
+        typeof item?.time === 'string' &&
+        typeof item?.title === 'string' &&
+        typeof item?.type === 'string',
+    )
+    return cleaned.length > 0 ? cleaned : INITIAL_DAILY_SCHEDULE
+  } catch {
+    return INITIAL_DAILY_SCHEDULE
+  }
+}
+
+export function saveDailySchedule(items: DailyScheduleItem[]): void {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(DAILY_SCHEDULE_STORAGE_KEY, JSON.stringify(items))
+}
+
+export function getWorkingDaysSchedule(): WorkingDayItem[] {
+  if (typeof window === 'undefined') return INITIAL_WORKING_DAYS
+  try {
+    const raw = window.localStorage.getItem(WORKING_DAYS_STORAGE_KEY)
+    if (!raw) return INITIAL_WORKING_DAYS
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return INITIAL_WORKING_DAYS
+    const cleaned = parsed.filter(
+      (item): item is WorkingDayItem =>
+        typeof item?.day === 'string' &&
+        typeof item?.hasShift === 'boolean' &&
+        typeof item?.shiftStartTime === 'string',
+    )
+    return cleaned.length > 0 ? cleaned : INITIAL_WORKING_DAYS
+  } catch {
+    return INITIAL_WORKING_DAYS
+  }
+}
+
+export function saveWorkingDaysSchedule(items: WorkingDayItem[]): void {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(WORKING_DAYS_STORAGE_KEY, JSON.stringify(items))
+}
+
+export function getChecklist(): ChecklistItem[] {
+  if (typeof window === 'undefined') return INITIAL_CHECKLIST_ITEMS
+  try {
+    const raw = window.localStorage.getItem(CHECKLIST_STORAGE_KEY)
+    if (!raw) return INITIAL_CHECKLIST_ITEMS
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return INITIAL_CHECKLIST_ITEMS
+    const byId = new Map<string, { checked: boolean; notes: string }>()
+    for (const item of parsed) {
+      if (typeof item?.id === 'string' && typeof item?.checked === 'boolean') {
+        byId.set(item.id, {
+          checked: item.checked,
+          notes: typeof item.notes === 'string' ? item.notes : '',
+        })
+      }
+    }
+    return INITIAL_CHECKLIST_ITEMS.map((def) => {
+      const stored = byId.get(def.id)
+      return stored
+        ? { ...def, checked: stored.checked, notes: stored.notes }
+        : { ...def, notes: def.notes ?? '' }
+    })
+  } catch {
+    return INITIAL_CHECKLIST_ITEMS
+  }
+}
+
+export function saveChecklist(items: ChecklistItem[]): void {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(items))
 }
