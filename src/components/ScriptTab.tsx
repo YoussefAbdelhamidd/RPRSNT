@@ -9,11 +9,17 @@ export function ScriptTab() {
 
         <div className="space-y-5 text-[0.95rem] leading-relaxed">
           <div>
-            <h3 className="mb-2 font-bold text-[#10233f]">Opening (Pattern Interrupt)</h3>
+            <h3 className="mb-2 font-bold text-[#10233f]">Opening (Intro)</h3>
             <p className="italic">
-              &ldquo;Hey [Merchant Name], this is Jomol with Venture Vault Network — quick question, are you still open to reviewing better funding options for your business, or should I close this out?&rdquo;
+              &ldquo;Hey [Name], this is Steve from Venture Vault Network.
+              We haven&apos;t spoken before — I came across your business while researching companies in your industry, and I just wanted to quickly introduce myself.
             </p>
-            <p className="mt-2 text-sm text-[#5f7087]">(Pause. Let them answer.)</p>
+            <p className="mt-2 italic">
+              We&apos;re a small funding network that helps businesses access better financing options — usually faster and more flexible than traditional banks.
+            </p>
+            <p className="mt-2 italic">
+              I&apos;m not sure what your current funding situation looks like, but I wanted to see if it makes sense to have a quick conversation.&rdquo;
+            </p>
           </div>
 
           <div>

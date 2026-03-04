@@ -352,10 +352,11 @@ export function TimeTracker({
     const lunchMs = (breakTimeByType['Lunch'] ?? 0) + (currentBreakType === 'Lunch' ? currentSegment : 0)
     const meetingMs = (breakTimeByType['Team huddle'] ?? 0) + (currentBreakType === 'Team huddle' ? currentSegment : 0)
     const breakMs = (breakTimeByType['Short break'] ?? 0) + (currentBreakType === 'Short break' ? currentSegment : 0)
+    const MAX_READY_MINUTES = 8 * 60 // 8 hours max
     submitCallSheetForm({
       agent: getLoggedInUsername(),
       checkInHour,
-      totalReadyMinutes: msToMinutes(netWorkMs),
+      totalReadyMinutes: Math.min(msToMinutes(netWorkMs), MAX_READY_MINUTES),
       lunchMinutes: msToMinutes(lunchMs),
       meetingMinutes: msToMinutes(meetingMs),
       breakMinutes: msToMinutes(breakMs),
