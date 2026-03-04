@@ -12,7 +12,7 @@ const CALL_CARD_WIDTH = 360
 const CALL_CARD_HEIGHT = 280
 
 import type { BreakType } from '../hooks'
-import { toDuration } from '../utils'
+import { toDuration, submitCallSheetForm } from '../utils'
 
 export type TimeTrackerProps = {
   isPunchedIn: boolean
@@ -22,6 +22,8 @@ export type TimeTrackerProps = {
   currentBreakSegmentMs?: number
   netWorkDuration: string
   currentBreakDuration: string
+  punchedInAt: number | null
+  netWorkMs: number
   onPunchIn: () => void
   onPunchOut: () => void
   onStartBreak: (type: BreakType) => void
@@ -51,6 +53,8 @@ export function TimeTracker({
   currentBreakSegmentMs = 0,
   netWorkDuration,
   currentBreakDuration,
+  punchedInAt,
+  netWorkMs,
   onPunchIn,
   onPunchOut,
   onStartBreak,
@@ -338,6 +342,26 @@ export function TimeTracker({
       : 'Ready'
     : 'Not Punched In'
 
+  function submitDailyReportForm() {
+    if (punchedInAt === null) return
+    const now = Date.now()
+    const msToMinutes = (ms: number) => Math.round(ms / 60_000)
+    const d = new Date(punchedInAt)
+    const checkInHour = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+    const currentSegment = currentBreakType && currentBreakType !== 'Ready' ? currentBreakSegmentMs : 0
+    const lunchMs = (breakTimeByType['Lunch'] ?? 0) + (currentBreakType === 'Lunch' ? currentSegment : 0)
+    const meetingMs = (breakTimeByType['Team huddle'] ?? 0) + (currentBreakType === 'Team huddle' ? currentSegment : 0)
+    const breakMs = (breakTimeByType['Short break'] ?? 0) + (currentBreakType === 'Short break' ? currentSegment : 0)
+    submitCallSheetForm({
+      checkInHour,
+      totalReadyMinutes: msToMinutes(netWorkMs),
+      lunchMinutes: msToMinutes(lunchMs),
+      meetingMinutes: msToMinutes(meetingMs),
+      breakMinutes: msToMinutes(breakMs),
+      totalTimeMinutes: msToMinutes(now - punchedInAt),
+    })
+  }
+
   function handleCallPopupPointerDown(event: ReactPointerEvent<HTMLElement>) {
     const target = event.target as HTMLElement
     if (target.closest('button, input, textarea, select, label')) return
@@ -566,7 +590,17 @@ export function TimeTracker({
               End Break
             </button>
           ) : null}
-          <button type="button" className={actionBtnClass} onClick={onPunchOut} disabled={!isPunchedIn}>
+          <button
+            type="button"
+            className={actionBtnClass}
+            onClick={() => {
+              if (isPunchedIn) {
+                submitDailyReportForm()
+                onPunchOut()
+              }
+            }}
+            disabled={!isPunchedIn}
+          >
             Punch Out
           </button>
         </div>
@@ -716,7 +750,7 @@ export function TimeTracker({
                   type="button"
                   className="rounded-lg border border-[#7bd3a2] bg-[#1d3a33] px-4 py-1.5 text-[0.7rem] font-semibold text-[#c7f5dd] hover:bg-[#225040]"
                   onClick={() => {
-                    // For now just close the sheet; values remain in state until cleared manually.
+                    submitDailyReportForm()
                     setIsCallPopupOpen(false)
                   }}
                 >

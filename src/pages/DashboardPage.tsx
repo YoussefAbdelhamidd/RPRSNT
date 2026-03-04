@@ -152,6 +152,8 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
         currentBreakSegmentMs={timeTracker.currentBreakSegmentMs}
         netWorkDuration={timeTracker.netWorkDuration}
         currentBreakDuration={timeTracker.currentBreakDuration}
+        punchedInAt={timeTracker.punchedInAt}
+        netWorkMs={timeTracker.netWorkMs}
         onPunchIn={timeTracker.punchIn}
         onPunchOut={timeTracker.punchOut}
         onStartBreak={timeTracker.startBreak}
@@ -164,3 +166,4 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     </main>
   )
 }
+  

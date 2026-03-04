@@ -2,6 +2,24 @@ import type { RebuttalItem, ChecklistItem, DailyScheduleItem, WorkingDayItem } f
 
 export const REBUTTAL_STORAGE_KEY = 'call-assistant-rebuttals-v1'
 export const DAILY_SCHEDULE_STORAGE_KEY = 'call-assistant-daily-schedule-v1'
+
+/**
+ * Google Form for Daily Report (auto-submit on Punch Out).
+ * Field order: CheckIn, Ready, Launch, Meeting, Break, Total.
+ */
+const DAILY_REPORT_FORM_ID = '1FAIpQLSeE4xmVd9PXbrcjpTd4WTQTc6l-sOlvBOvZsq52c6-d-5kuqg'
+export const GOOGLE_FORM_CALL_SHEET = {
+  baseUrl: `https://docs.google.com/forms/d/e/${DAILY_REPORT_FORM_ID}/viewform`,
+  formResponseUrl: `https://docs.google.com/forms/d/e/${DAILY_REPORT_FORM_ID}/formResponse`,
+  entryIds: {
+    checkInHour: 'entry.1550911837',
+    totalReadyMinutes: 'entry.1354390549',
+    lunchMinutes: 'entry.1079616396',
+    meetingMinutes: 'entry.117578317',
+    breakMinutes: 'entry.1961377084',
+    totalTimeMinutes: 'entry.1262126801',
+  },
+} as const
 export const WORKING_DAYS_STORAGE_KEY = 'call-assistant-working-days-v1'
 export const CHECKLIST_STORAGE_KEY = 'call-assistant-checklist-v1'
 export const ACCESS_SESSION_STORAGE_KEY = 'call-assistant-access-session-v1'
