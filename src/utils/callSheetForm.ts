@@ -1,6 +1,7 @@
 import { GOOGLE_FORM_CALL_SHEET } from '../constants'
 
 export type CallSheetFormData = {
+  agent: string
   checkInHour: string
   totalReadyMinutes: number
   lunchMinutes: number
@@ -12,6 +13,7 @@ export type CallSheetFormData = {
 export function buildCallSheetFormPrefillUrl(data: CallSheetFormData): string {
   const { baseUrl, entryIds } = GOOGLE_FORM_CALL_SHEET
   const params = new URLSearchParams({
+    [entryIds.agent]: String(data.agent),
     [entryIds.checkInHour]: String(data.checkInHour),
     [entryIds.totalReadyMinutes]: String(data.totalReadyMinutes),
     [entryIds.lunchMinutes]: String(data.lunchMinutes),
@@ -42,6 +44,7 @@ export function submitCallSheetForm(data: CallSheetFormData): void {
   form.style.display = 'none'
 
   const fields: [keyof CallSheetFormData, string][] = [
+    ['agent', entryIds.agent],
     ['checkInHour', entryIds.checkInHour],
     ['totalReadyMinutes', entryIds.totalReadyMinutes],
     ['lunchMinutes', entryIds.lunchMinutes],

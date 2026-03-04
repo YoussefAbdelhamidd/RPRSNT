@@ -7,6 +7,8 @@ export {
   saveRebuttals,
   grantAccessSession,
   revokeAccessSession,
+  saveLoggedInUsername,
+  getLoggedInUsername,
   getDailySchedule,
   saveDailySchedule,
   getWorkingDaysSchedule,

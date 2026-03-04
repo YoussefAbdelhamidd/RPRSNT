@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { LoginForm } from '../components'
 import { AGENT_CREDENTIALS } from '../constants'
-import { grantAccessSession } from '../utils'
+import { grantAccessSession, saveLoggedInUsername } from '../utils'
 
 export type LoginPageProps = {
   onAuthenticated: () => void
@@ -25,6 +25,7 @@ export function LoginPage({ onAuthenticated, showHint = false }: LoginPageProps)
       return
     }
     grantAccessSession()
+    saveLoggedInUsername(entry[0])
     onAuthenticated()
     setError('')
     setUsername('')

@@ -5,13 +5,14 @@ export const DAILY_SCHEDULE_STORAGE_KEY = 'call-assistant-daily-schedule-v1'
 
 /**
  * Google Form for Daily Report (auto-submit on Punch Out).
- * Field order: CheckIn, Ready, Launch, Meeting, Break, Total.
+ * Field order: Agent, CheckIn, Ready, Launch, Meeting, Break, Total.
  */
 const DAILY_REPORT_FORM_ID = '1FAIpQLSeE4xmVd9PXbrcjpTd4WTQTc6l-sOlvBOvZsq52c6-d-5kuqg'
 export const GOOGLE_FORM_CALL_SHEET = {
   baseUrl: `https://docs.google.com/forms/d/e/${DAILY_REPORT_FORM_ID}/viewform`,
   formResponseUrl: `https://docs.google.com/forms/d/e/${DAILY_REPORT_FORM_ID}/formResponse`,
   entryIds: {
+    agent: 'entry.2004732556',
     checkInHour: 'entry.1550911837',
     totalReadyMinutes: 'entry.1354390549',
     lunchMinutes: 'entry.1079616396',
@@ -20,6 +21,8 @@ export const GOOGLE_FORM_CALL_SHEET = {
     totalTimeMinutes: 'entry.1262126801',
   },
 } as const
+
+export const LOGGED_IN_USERNAME_STORAGE_KEY = 'call-assistant-logged-in-username-v1'
 export const WORKING_DAYS_STORAGE_KEY = 'call-assistant-working-days-v1'
 export const CHECKLIST_STORAGE_KEY = 'call-assistant-checklist-v1'
 export const ACCESS_SESSION_STORAGE_KEY = 'call-assistant-access-session-v1'

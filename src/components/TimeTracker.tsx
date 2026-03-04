@@ -12,7 +12,7 @@ const CALL_CARD_WIDTH = 360
 const CALL_CARD_HEIGHT = 280
 
 import type { BreakType } from '../hooks'
-import { toDuration, submitCallSheetForm } from '../utils'
+import { toDuration, submitCallSheetForm, getLoggedInUsername } from '../utils'
 
 export type TimeTrackerProps = {
   isPunchedIn: boolean
@@ -353,6 +353,7 @@ export function TimeTracker({
     const meetingMs = (breakTimeByType['Team huddle'] ?? 0) + (currentBreakType === 'Team huddle' ? currentSegment : 0)
     const breakMs = (breakTimeByType['Short break'] ?? 0) + (currentBreakType === 'Short break' ? currentSegment : 0)
     submitCallSheetForm({
+      agent: getLoggedInUsername(),
       checkInHour,
       totalReadyMinutes: msToMinutes(netWorkMs),
       lunchMinutes: msToMinutes(lunchMs),

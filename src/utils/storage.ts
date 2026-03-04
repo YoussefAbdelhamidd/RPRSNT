@@ -2,6 +2,7 @@ import type { RebuttalItem, DailyScheduleItem, WorkingDayItem, ChecklistItem } f
 import {
   REBUTTAL_STORAGE_KEY,
   ACCESS_SESSION_STORAGE_KEY,
+  LOGGED_IN_USERNAME_STORAGE_KEY,
   INITIAL_REBUTTAL_QUESTIONS,
   DAILY_SCHEDULE_STORAGE_KEY,
   WORKING_DAYS_STORAGE_KEY,
@@ -48,6 +49,17 @@ export function grantAccessSession(): void {
 export function revokeAccessSession(): void {
   if (typeof window === 'undefined') return
   window.localStorage.removeItem(ACCESS_SESSION_STORAGE_KEY)
+  window.localStorage.removeItem(LOGGED_IN_USERNAME_STORAGE_KEY)
+}
+
+export function saveLoggedInUsername(username: string): void {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(LOGGED_IN_USERNAME_STORAGE_KEY, username)
+}
+
+export function getLoggedInUsername(): string {
+  if (typeof window === 'undefined') return ''
+  return window.localStorage.getItem(LOGGED_IN_USERNAME_STORAGE_KEY) ?? ''
 }
 
 export function getDailySchedule(): DailyScheduleItem[] {
