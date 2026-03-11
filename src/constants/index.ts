@@ -48,6 +48,7 @@ export const AGENT_CREDENTIALS: Record<string, string> = {
   'andrew.sedrak': 'andrew123',
   'mohamed.sami': 'mohamed123',
   'youssef.alsaghier': 'youssef123',
+  'shadenali':'shadenali2026',
   'admin': '123456',
   "nancyelfaham":"N24052004N@",
   'ahmed.yasser': 'ahmed123',

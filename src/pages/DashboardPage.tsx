@@ -95,7 +95,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
   }
 
   return (
-    <main className="min-h-screen p-8 max-md:p-4 max-md:pb-72 bg-gradient-to-br from-[#f5f7fb] to-[#e8eef9] text-[#0e1a2b]">
+    <main className="min-h-screen p-8 max-md:p-4 max-md:pb-72 bg-linear-to-br from-[#f5f7fb] to-[#e8eef9] text-[#0e1a2b]">
       <section className="max-w-[900px] mx-auto bg-white rounded-2xl p-6 shadow-lg">
         <PageHeader
           title="Call Assistant Dashboard"

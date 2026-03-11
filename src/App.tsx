@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { LoginPage, DashboardPage } from './pages'
 import { hasSavedAccessSession, revokeAccessSession } from './utils'
+import { TemporaryDownPage } from './pages/TemporaryDownPage'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(hasSavedAccessSession)
@@ -12,11 +13,8 @@ function App() {
     setIsAuthenticated(false)
   }
 
-  if (!isAuthenticated) {
-    return <LoginPage onAuthenticated={handleAuthenticated} />
-  }
-
-  return <DashboardPage onLogout={handleLogout} />
+  // Temporary maintenance mode: always show "site down" screen
+  return <TemporaryDownPage />
 }
 
 export default App
